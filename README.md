@@ -54,7 +54,7 @@ To ensure analytical readiness, the pipeline enforces strict governance mechanis
 
 ---
 
-## 📊 Data Products & Dashboards
+## Data Products & Dashboards
 
 The Gold layer exposes pre-aggregated metrics directly to our visualization tools to answer critical clinical and operational questions.
 
