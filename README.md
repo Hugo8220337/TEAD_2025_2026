@@ -112,9 +112,6 @@ An automated inference pipeline that fetches real-time patient features and dyna
   </table>
 </div>
 
-### Post-Op ICU Admission Predictor (MLflow)
-A Flyte inference pipeline that fetches real-time patient features, retrieves the best-performing models from the MLflow Registry, and outputs the predicted ICU days and admission necessity.
-
 ---
 
 **Note:** `flytekit` currently presents compatibility issues with Python 3.13. A downgrade to Python 3.11 is required. We recommend using `uv` for fast environment management
