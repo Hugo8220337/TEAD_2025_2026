@@ -1,0 +1,69 @@
+contract:
+  id: gold.pre_vs_pos_operation_summary
+  version: 1.0.0
+  applies_to_product: gold.pre_vs_pos_operation_summary
+  status: active
+
+product:
+  id: gold.pre_vs_pos_operation_summary
+  layer: gold
+  domain: healthcare_analytics
+  owner:
+    team: data-engineering
+    contact: data-engineering@hospital.org
+  description: "Aggregated table (OBT) that crosses patient demographic and surgical data with the deltas (variations) of their laboratory tests caused by the surgery."
+  consumers:
+    - name: clinical_impact_dashboard
+      type: dashboard
+      access: iceberg_read
+
+interface:
+  grain: "1 summary record per patient per laboratory test."
+  primary_key: [caseid, lab_test]
+
+schema:
+  - name: caseid
+    type: string
+    nullable: false
+    description: "Unique identifier for the patient's surgical case."
+  - name: lab_test
+    type: string
+    nullable: false
+    description: "Code of the analyzed laboratory test."
+  - name: pre_op_avg
+    type: float
+    nullable: false
+    description: "The most recent laboratory value before the start of surgery."
+  - name: pos_op_avg
+    type: float
+    nullable: false
+    description: "The most recent laboratory value after/during surgery."
+  - name: absolute_delta
+    type: float
+    nullable: false
+    description: "The absolute difference between Post and Pre-operative values (pos_op_val - pre_op_val)."
+  - name: age
+    type: integer
+    nullable: false
+    description: "Biological age of the patient in years."
+  - name: sex
+    type: string
+    nullable: true
+    description: "Biological sex of the patient (M/F)."
+  - name: department
+    type: string
+    nullable: true
+    description: "Hospital department where the surgery took place."
+
+semantics:
+  definitions:
+    absolute_delta: "Measures the direct physiological impact. A negative Hb value, for example, indicates blood loss."
+
+quality:
+  constraints:
+    - rule: "no_nulls(caseid, lab_test, pre_op_avg, pos_op_avg)"
+      severity: error
+      description: "Only patients with both before and after measurements (complete pairs) are included in the Gold table."
+    - rule: "age >= 0 AND age <= 120"
+      severity: error
+      description: "Guarantee that anomalous demographic data has not leaked into the Gold layer."

@@ -1,0 +1,33 @@
+\section{Definição do Problema} \label{sec:definicao_problema}
+
+\subsection{Problema a Resolver} \label{subsec:problema_a_resolver}
+A monitorização contínua em ambiente perioperatório (recorrendo ao VitalDB) gera um fluxo de dados de alta velocidade (frequentemente com múltiplos registos por segundo). O principal problema reside na extrema suscetibilidade destes sensores a artefactos mecânicos (movimentos do paciente, desconexão de cabos) e eletrónicos, resultando em falsos positivos, dados ausentes e flutuações irreais (ruído). Adicionalmente, o cruzamento deste fluxo contínuo com dados pontuais assíncronos (como exames laboratoriais) cria desafios complexos de alinhamento temporal e integração analítica, impossibilitando uma tomada de decisão médica fiável em tempo real se a informação não for devidamente validada e contextualizada.
+
+\subsection{Produtos de Dados} \label{subsec:produtos_dados}
+Para dar resposta às necessidades analíticas e operacionais do hospital descritas na secção anterior, a arquitetura disponibiliza quatro \textit{Data Products} distintos na camada Gold:
+
+\begin{itemize}
+	\item \textbf{Qualidade e Janela de Visualização dos Sinais Vitais:} Converte os dados da camada silver e gera agregações por janelas temporais para monitorizar a qualidade dos sensores e análise clínica exploratória.
+	\begin{itemize}
+		\item \textit{Pergunta Analítica:} Qual é a disponibilidade dos sensores ao longo da cirurgia e qual o comportamento médio dos sinais em janelas temporais fixas?
+		\item \textit{Consumidor:} \textit{Dashboards} de monitorização clínica e auditoria da qualidade dos dados.
+	\end{itemize}
+	
+	\item \textbf{Avaliação de Impacto Laboratorial (Pré vs. Pós-Operatório):} Combina os resultados laboratoriais com o histórico clínico e demográfico dos pacientes para avaliar a variância bioquímica e o desgaste fisiológico decorrentes do stress cirúrgico.
+	\begin{itemize}
+		\item \textit{Pergunta Analítica:} Qual a magnitude da variação dos marcadores bioquímicos críticos no período pós-operatório imediato, estratificada por especialidade médica e género?
+		\item \textit{Consumidor:} \textit{Dashboard} interativo de suporte à decisão clínica e executiva (desenvolvido em Streamlit), focado na monitorização e exploração visual de tendências populacionais.
+	\end{itemize}
+	
+	\item \textbf{Registo de Qualidade do Sensor e Anomalias de Dados:} Um produto focado na fiabilidade da infraestrutura. Avalia a qualidade do equipamento em tempo real, impondo contratos de dados rigorosos e fornecendo uma classificação final de saúde (\textit{Health Grade}) para cada dispositivo.
+	\begin{itemize}
+		\item \textit{Métricas:} Taxas de nulos na janela ativa, deteção de anomalias temporais (sinais congelados e picos de ruído), incidência de falhas de \textit{hardware} e desvios morfológicos entre sensores paralelos (\textit{drift}).
+		\item \textit{Consumidor:} Engenheiros de dados (monitorização do \textit{pipeline}) e equipa de manutenção hospitalar (manutenção preditiva).
+	\end{itemize}
+	
+	\item \textbf{Previsor de Alocação de UCI Pós-Operatória:} Produto que alimenta um modelo de \textit{Machine Learning} supervisionado.
+	\begin{itemize}
+		\item \textit{Pergunta Analítica:} Qual a probabilidade de um paciente necessitar de admissão imediata na Unidade de Cuidados Intensivos (UCI) e qual o seu tempo estimado de recuperação? 
+		\item \textit{Consumidor:} Administração hospitalar para pré-alocação de recursos críticos e o modelo treinado rastreado via MLFlow.
+	\end{itemize}
+\end{itemize}

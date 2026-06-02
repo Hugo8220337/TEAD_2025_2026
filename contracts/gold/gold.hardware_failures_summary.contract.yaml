@@ -1,0 +1,58 @@
+contract:
+  id: gold.hardware_failures_summary
+  version: 1.0.0
+  applies_to_product: gold.hardware_failures_summary
+  status: active
+
+product:
+  id: gold.hardware_failures_summary
+  layer: gold
+  domain: healthcare_iot
+  owner:
+    team: data-engineering
+    contact: data-engineering@company.com
+  description: "Summary of hardware failures detected across all sensors, aggregated by case and time. This product identifies patterns of sensor malfunctions, including frequency and types of failures, to support proactive maintenance and improve patient safety."
+  consumers:
+    - name: clinical_quality_dashboard
+      type: dashboard
+      access: iceberg_read
+
+interface:
+  grain: "1 summary record per per case per sensor"
+  primary_key: [case_id, sensor_name, error_reason]
+
+schema:
+  - name: case_id
+    type: string
+    nullable: false
+    description: "Identifier for the surgical case or patient session."
+  - name: sensor_name
+    type: string
+    nullable: false
+    description: "Name of the sensor that experienced the failure."
+  - name: equipment_brand
+    type: string
+    nullable: false
+    description: "Brand of the equipment associated with the sensor, if available."
+  - name: error_reason
+    type: string
+    nullable: true
+    description: "Description of the reason for the hardware failure, if available."
+  - name: failure_count
+    type: integer
+    nullable: false
+    description: "Total number of hardware failures detected for the case."
+
+semantics:
+  definitions:
+    hardware_failure: "An event where a sensor's readings are deemed unreliable due to detected malfunctions, such as signal loss, out-of-range values, or known error patterns."
+
+quality:
+  constraints:
+    - rule: "no_nulls(case_id, sensor_name, equipment_brand, failure_count)"
+      severity: error
+      description: "Critical fields must not be null in the hardware failures summary."
+    - rule: "failure_count >= 0"
+      severity: error
+      description: "Failure count must be zero or positive."
+

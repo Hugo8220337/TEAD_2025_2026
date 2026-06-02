@@ -1,0 +1,13 @@
+pandas
+pyarrow
+minio
+flytekit
+polars
+pyiceberg[hive,pyarrow,s3fs] # é mesmo assim Diogo, se não for desta forma não vai funfar
+trino
+pyyaml # Para correr os contratos
+streamlit # Para criar a interface de visualização
+plotly
+
+# Para instalar os datasets
+vitaldb

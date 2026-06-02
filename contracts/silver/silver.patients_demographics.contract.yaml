@@ -1,0 +1,79 @@
+# Follows the open data contract standard: https://bitol-io.github.io/open-data-contract-standard/latest/
+
+contract:
+  id: silver.patients_demographics
+  version: 1.0.0
+  applies_to_product: silver.patients
+  status: active
+
+product:
+  id: silver.patients_demographics
+  layer: silver
+  domain: healthcare_clinical
+  owner:
+    team: data-engineering
+    contact: data-engineering@hospital.org
+  description: "Cleaned patient demographic data, including physical metrics and risk scores (ASA). Separated from surgical context to follow domain-driven design."
+  consumers:
+    - name: gold.pre_vs_pos_operation_summary
+      type: analytics
+      access: iceberg_read
+
+interface:
+  grain: "1 unique demographic record per patient case"
+  primary_key: [caseid]
+
+schema:
+  - name: caseid
+    type: string
+    nullable: false
+    description: "Unique identifier for the patient's surgical case."
+  - name: age
+    type: float
+    nullable: false
+    description: "Patient's biological age in years."
+  - name: sex
+    type: string
+    nullable: true
+    description: "Patient's biological sex (Standardized to uppercase, e.g., 'M', 'F')."
+  - name: height
+    type: float
+    nullable: true
+    description: "Patient's height in centimeters."
+  - name: weight
+    type: float
+    nullable: true
+    description: "Patient's weight in kilograms."
+  - name: bmi
+    type: float
+    nullable: true
+    description: "Body Mass Index (BMI)."
+  - name: asa
+    type: float
+    nullable: true
+    description: "ASA physical status classification system score."
+
+semantics:
+  definitions:
+    patient_demographics: "A deduplicated record containing physical and biological traits of the patient. Guaranteed to have valid age and physical bounds."
+
+quality: 
+  constraints:
+    - rule: "no_nulls(caseid, age)"
+      severity: error
+      description: "caseid and age are strictly mandatory to pass biological validation."
+    - rule: "is_unique(caseid)"
+      severity: error
+      description: "Guaranteed by the deduplication step (keep='last') in the orchestrator."
+    - rule: "age BETWEEN 0 AND 120"
+      severity: error
+      description: "Biological limit check applied during Silver transformation."
+    - rule: "height BETWEEN 40 AND 250 OR height IS NULL"
+      severity: error
+      description: "Height must be within human biological bounds or null."
+    - rule: "weight BETWEEN 2 AND 400 OR weight IS NULL"
+      severity: error
+      description: "Weight must be within human biological bounds or null."
+  slo:
+    freshness: "P95 <= 15m after Bronze ingestion"
+    completeness: ">= 99% of valid records from Bronze"

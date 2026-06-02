@@ -1,0 +1,107 @@
+# Segue o open data contract standard: https://bitol-io.github.io/open-data-contract-standard/latest/
+
+contract:
+  id: silver.sensor_view_input
+  version: 1.0.0
+  applies_to_product: silver.sensor_view_input
+  status: active
+
+product:
+  id: silver.sensor_view_input
+  layer: silver
+  domain: healthcare_iot
+  owner:
+    team: data-engineering
+    contact: data-engineering@company.com
+  description: >
+    Cleaned sensor-event input used by the gold sensor view workflow.
+    This product provides a standardized row-per-reading grain with the
+    minimum fields required for window aggregation and uptime calculations.
+  consumers:
+    - name: gold.sensor_uptime_rates
+      type: analytics
+      access: iceberg_read
+    - name: gold.view_window
+      type: analytics
+      access: iceberg_read
+
+interface:
+  grain: "1 cleaned event per sensor reading"
+  primary_key: [case_id, time, sensor_id]
+
+schema:
+  - name: case_id
+    type: string
+    nullable: false
+    description: "Identifier for the surgical case or patient session."
+
+  - name: time
+    type: timestamp
+    nullable: false
+    description: "Standardized event time in UTC."
+
+  - name: ingest_time
+    type: timestamp
+    nullable: false
+    description: "System timestamp when the event was ingested."
+
+  - name: sensor_id
+    type: string
+    nullable: false
+    description: "Canonical sensor identifier used in downstream gold workflows."
+
+  - name: sensor_name
+    type: string
+    nullable: true
+    description: "Human-readable sensor name."
+
+  - name: sensor_type
+    type: string
+    nullable: true
+    description: "Sensor category."
+
+  - name: value
+    type: number
+    nullable: true
+    description: "Measured sensor value after cleaning and normalization."
+
+  - name: unit
+    type: string
+    nullable: true
+    description: "Measurement unit for the value."
+
+  - name: is_valid
+    type: boolean
+    nullable: false
+    description: "Indicates whether the reading passed validation rules."
+
+semantics:
+  definitions:
+    cleaned_event: "A sensor reading processed to remove duplicates and invalid values."
+    canonical_sensor: "Normalized sensor name used consistently across workflows."
+
+quality:
+  constraints:
+    - rule: "no_nulls(case_id, time, ingest_time, sensor_id, is_valid)"
+      severity: error
+      description: "Critical fields must not be null after cleaning."
+    - rule: "time <= current_timestamp()"
+      severity: error
+      description: "Event time cannot be in the future."
+    - rule: "is_valid IN (true, false)"
+      severity: error
+      description: "Validity flag must be boolean."
+
+  slo:
+    freshness: "P95 <= 10m after event generation"
+    completeness: ">= 99% of valid events should be present in Silver"
+    accuracy: ">= 98% of events should pass validation rules"
+
+change_management:
+  compatibility_rules:
+    - change: "add_optional_field"
+      version_bump: minor
+      compatibility: backward
+    - change: "rename_required_field"
+      version_bump: major
+      compatibility: breaking

@@ -1,0 +1,20 @@
+\section{Introdução} \label{sec:introducao}
+
+\subsection{Contextualização e Tema do Projeto}
+Na atualidade, as instituições de saúde geram volumes massivos de dados por cada caso cirúrgico, que frequentemente acabam por permanecer isolados em diferentes silos. Este projeto desenvolve-se em torno da Empresa Y, uma organização de engenharia de dados focada no setor da saúde, que atua no domínio perioperatório com o objetivo de modernizar a infraestrutura de dados de grandes redes hospitalares.
+
+A plataforma integra três fontes independentes: informação clínica, parâmetros hemodinâmicos e resultados laboratoriais. Contudo, a análise destes dados esbarra em sérios problemas de qualidade, nomeadamente ruído e artefactos nos sinais vitais de alta frequência, bem como timestamps assíncronos e valores nulos nos exames laboratoriais. Para resolver esta fragmentação, propõe-se a implementação de uma arquitetura Lakehouse moderna (assente em MinIO, Apache Iceberg, Trino e Flyte). Esta solução ingere e processa os dados através das camadas Bronze, Silver e Gold, garantindo a qualidade necessária para suportar modelagem preditiva e tomada de decisão.
+
+\subsection{Objetivos do Trabalho}
+O objetivo central deste trabalho prático é simular de forma realista o ciclo de vida de construção e operação de uma plataforma analítica escalável orientada a produtos de dados. Para tal, desenhou-se uma solução end-to-end que aplica os conceitos de data engineering e machine learning, assegurando a separação entre computação e armazenamento.
+
+O projeto visa implementar pipelines orquestrados de forma reprodutível e tolerante a falhas, aplicar estratégias de otimização no processamento dos dados e garantir a qualidade da informação servida através da definição de contratos de dados rigorosos.
+
+\subsection{Estrutura do Relatório}
+Para além desta secção introdutória, o presente relatório encontra-se estruturado em cinco capítulos adicionais:
+\begin{itemize}
+	\item \textbf{Capítulo 2 - Definição do Problema:} Detalha os desafios inerentes aos dados médicos de alta frequência e especifica os produtos de dados propostos como solução.
+	\item \textbf{Capítulo 3 - Arquitetura do Lakehouse:} Apresenta a \textit{stack} tecnológica utilizada, o modelo \textit{Medallion} (Bronze, Silver e Gold) e a forma como os \textit{workflows} foram orquestrados no Flyte.
+	\item \textbf{Capítulo 4 - Governança e Garantia de Qualidade:} Explora a implementação de Contratos de Dados (Data Contracts) e a estratégia de quarentena (\textit{Dead Letter Queue}) para assegurar a fiabilidade da informação.
+	\item \textbf{Capítulo 5 - Visualização de Dados:} Descreve o consumo analítico das tabelas Gold via motor SQL e a sua consequente visualização em \textit{dashboards} clínicos e operacionais no Grafana.
+\end{itemize}

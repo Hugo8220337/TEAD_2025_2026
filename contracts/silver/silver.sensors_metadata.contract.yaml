@@ -1,0 +1,57 @@
+contract:
+  id: silver.sensors_metadata
+  version: 1.0.0
+  applies_to_product: silver.vitals
+  status: active
+
+product:
+  id: silver.sensors_metadata
+  layer: silver
+  domain: healthcare_iot
+  owner:
+    team: data-engineering
+    contact: data-engineering@company.com
+  description: "Metadata about the sensors used in the surgical cases, including sensor names, types, locations, and any relevant calibration information. This metadata is essential for interpreting the vital signs data and enabling sensor-level analysis."
+  consumers:
+    - name: gold.cross_sensor_drift
+      type: dashboard
+      access: iceberg_read
+    - name: gold.hardware_failures_summary
+      type: dashboard
+      access: iceberg_read
+
+interface:
+  grain: "1 record per sensor"
+  primary_key: [sensor_id]
+
+schema:
+  - name: sensor_id
+    type: string
+    nullable: false
+    description: "Unique identifier for each sensor, which could be a combination of sensor type and location (e.g., 'heart_rate_bedside_1')."
+  - name: parameter_measured
+    type: string
+    nullable: false
+    description: "The physiological parameter that the sensor measures, such as 'heart_rate', 'blood_pressure', or 'oxygen_saturation'."
+  - name: equipment_brand
+    type: string
+    nullable: true
+    description: "Brand of the equipment that the sensor is part of, if available."
+  - name: unit_of_measure
+    type: string
+    nullable: true
+    description: "Unit of measure for the sensor readings, such as 'bpm' for heart rate or 'mmHg' for blood pressure."
+
+semantics: 
+  definitions:
+    sensor_metadata_record: "A record containing metadata information about a specific sensor used in the surgical cases."
+
+quality:
+  constraints:
+    - rule: "no_nulls(sensor_id, parameter_measured)"
+      severity: error
+      description: "Sensor ID and the physiological parameter are mandatory for downstream logic."
+
+    - rule: "uniqueness(sensor_id) == 100%"
+      severity: error
+      description: "Each sensor must have exactly one metadata definition."

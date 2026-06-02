@@ -1,0 +1,55 @@
+# Segue o open data contract standard: https://bitol-io.github.io/open-data-contract-standard/latest/
+
+contract:
+  id: bronze.vitals
+  version: 1.0.0
+  applies_to_product: bronze.vitals
+  status: active
+
+product:
+  id: bronze.vitals
+  layer: bronze
+  domain: healthcare_iot
+  owner:
+    team: data-engineering
+    contact: data-engineering@hospital.org
+  description: "Raw, unmodified vital signs data ingested from VitalsDB. Preserves full fidelity for auditing, debugging, and reprocessing."
+  consumers:
+    - name: silver.vitals_filter_pipeline
+      type: pipeline
+      access: iceberg_read
+
+interface:
+  grain: "1 raw event per sensor reading as received"
+  primary_key: [] # No primary key in Bronze! We expect and keep duplicates.
+
+schema:
+  - name: case_id
+    type: string
+    nullable: true
+    description: "Identifier for the surgical case or patient session."
+  - name: time
+    type: timestamp
+    nullable: true
+    description: "Event time as reported by the source device."
+  - name: ingest_time
+    type: timestamp
+    nullable: false
+    description: "System timestamp when the event was ingested into the Bronze layer."
+  - name: source_system
+    type: string
+    nullable: false
+    description: "Identifier for the source system of the data, in this case, 'VitalDB'."
+
+semantics:
+  definitions:
+    raw_event: "An unmodified reading received from a sensor, including potential errors, nulls, or duplicates."
+
+quality:
+  constraints:
+    - rule: "no_nulls(ingest_time, source_system)"
+      severity: error
+      description: "We cannot lose the raw data or the ingestion metadata."
+    - rule: "schema_allows_additional_columns"
+      severity: info
+      description: "The CSV payload contains 100+ sensor columns. The Bronze schema only validates structural routing keys. Additional columns are preserved as-is for downstream processing."

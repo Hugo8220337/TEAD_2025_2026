@@ -1,0 +1,29 @@
+contract:
+  id: gold.sensor_uptime_rates
+  name: Sensor Uptime Rates
+  source: workflows/gold/workflow_sensor_view_gold.py
+  description: >
+    Contract for the Gold table that summarizes sensor uptime per surgery/case
+    and sensor.
+
+schema:
+  fields:
+    - name: surgery_id
+      type: string
+      description: Identificador da cirurgia/caso.
+    - name: sensor_id
+      type: string
+      description: Identificador do sensor.
+    - name: uptime_seconds
+      type: number
+      description: Tempo total de atividade observado para esse sensor.
+    - name: surgery_seconds
+      type: number
+      description: Duração total observada da cirurgia/caso.
+    - name: uptime_rate
+      type: number
+      description: Proporção entre uptime_seconds e surgery_seconds.
+
+quality:
+  constraints:
+    - rule: "no_nulls(surgery_id, sensor_id, uptime_seconds, surgery_seconds, uptime_rate)"

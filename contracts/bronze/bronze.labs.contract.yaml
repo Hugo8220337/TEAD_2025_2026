@@ -1,0 +1,63 @@
+# Segue o open data contract standard: https://bitol-io.github.io/open-data-contract-standard/latest/
+
+contract:
+  id: bronze.labs
+  version: 1.0.0
+  applies_to_product: bronze.labs
+  status: active
+
+product:
+  id: bronze.labs
+  layer: bronze
+  domain: healthcare_labs
+  owner:
+    team: data-engineering
+    contact: data-engineering@hospital.org
+  description: "Raw, unmodified laboratory results ingested from the Laboratory Information System (LIS). Preserves full fidelity for auditing, debugging, and reprocessing."
+  consumers:
+    - name: silver.labs_filter_pipeline
+      type: pipeline
+      access: iceberg_read
+
+interface:
+  grain: "1 raw event per lab measurement as received"
+  primary_key: [] # No primary key in Bronze! We expect and keep potential duplicates or incomplete records.
+
+schema:
+  - name: caseid
+    type: string
+    nullable: true
+    description: "Identifier for the surgical case or patient session."
+  - name: dt
+    type: string
+    nullable: true
+    description: "Time of the measurement in minutes relative to the start of the surgery, as received."
+  - name: name
+    type: string
+    nullable: true
+    description: "Short code for the lab test (e.g., hb, plt, gluc) as received."
+  - name: result
+    type: string
+    nullable: true
+    description: "Numeric value of the laboratory result, kept as string to prevent parsing errors during ingestion."
+  - name: ingest_time
+    type: timestamp
+    nullable: false
+    description: "System timestamp when the event was ingested into the Bronze layer."
+  - name: source_system
+    type: string
+    nullable: false
+    description: "Identifier for the source system of the data, in this case, 'Lab_Information_System'."
+
+semantics:
+  definitions:
+    raw_lab_record: "An unmodified measurement received from the laboratory system, including potential data entry errors, nulls, or duplicate timeings."
+
+quality:
+  constraints:
+    - rule: "no_nulls(ingest_time, source_system)"
+      severity: error
+      description: "We cannot lose the raw data audit trail or the ingestion metadata."
+    - rule: "schema_allows_additional_columns"
+      severity: info
+      description: "The laboratory payload might contain additional metadata. The Bronze schema only validates structural routing keys. Additional columns are preserved as-is for downstream processing in the Silver layer."

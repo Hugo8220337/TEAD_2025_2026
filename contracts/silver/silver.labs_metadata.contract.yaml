@@ -1,0 +1,57 @@
+# Follows the open data contract standard: https://bitol-io.github.io/open-data-contract-standard/latest/
+
+contract:
+  id: silver.labs_metadata
+  version: 1.0.0
+  applies_to_product: silver.labs
+  status: active
+
+product:
+  id: silver.labs_metadata
+  layer: silver
+  domain: healthcare_labs
+  owner:
+    team: data-engineering
+    contact: data-engineering@hospital.org
+  description: "Reference table containing biological normal ranges and units for laboratory tests."
+  consumers:
+    - name: clinical_impact_dashboard
+      type: dashboard
+      access: iceberg_read
+
+interface:
+  grain: "1 record per lab test type"
+  primary_key: [name]
+
+schema:
+  - name: name
+    type: string
+    nullable: false
+    description: "Standardized code for the lab test (e.g., hb, plt, gluc)."
+  - name: min_normal
+    type: float
+    nullable: false
+    description: "Minimum healthy/normal biological value."
+  - name: max_normal
+    type: float
+    nullable: false
+    description: "Maximum healthy/normal biological value."
+  - name: unit
+    type: string
+    nullable: false
+    description: "Unit of measurement for the test (e.g., g/dL, mg/dL)."
+
+semantics:
+  definitions:
+    reference_record: "Static metadata containing clinical reference ranges used to evaluate patient lab results."
+
+quality: 
+  constraints:
+    - rule: "no_nulls(name, min_normal, max_normal, unit)"
+      severity: error
+    - rule: "min_normal < max_normal"
+      severity: error
+      description: "Minimum normal range must be strictly less than maximum normal range."
+  slo:
+    freshness: "Static reference table, updated on-demand."
+    completeness: "100% coverage of all lab tests present in silver.labs_results."

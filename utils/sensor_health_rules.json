@@ -1,0 +1,37 @@
+{
+  "intermittent": {
+    "pattern": "nibp",
+    "max_nulls": 99.0,
+    "max_frozen_rate": 10.0,
+    "max_spike_rate": 5.0,
+    "description": "Sensores que medem por intervalos (ex: Pressão Arterial a cada 5 min). É normal terem muitos nulos no meio das medições."
+  },
+  "low_freq": {
+    "pattern": "primus|gas|fms|temp|mac|co2|des|sevo",
+    "max_nulls": 99.0,
+    "max_frozen_rate": 10.0,
+    "max_spike_rate": 5.0,
+    "description": "Máquinas e gases que enviam dados a cada 5-10 segundos em vez de 1Hz. Geram naturalmente muitos nulos na grelha temporal."
+  },
+  "waveform": {
+    "pattern": "ecg|wav|pleth",
+    "max_nulls": 15.0,
+    "max_frozen_rate": 10.0,
+    "max_spike_rate": 100.0,
+    "description": "Sensores de onda biológica contínua. Picos constantes e saltos drásticos são a norma (ex: batimentos cardíacos)."
+  },
+  "setting": {
+    "pattern": "rate|set|ce|ct",
+    "max_nulls": 15.0,
+    "max_frozen_rate": 100.0,
+    "max_spike_rate": 5.0,
+    "description": "Configurações de ventiladores e bombas de infusão. Podem ficar congelados no mesmo valor durante horas propositadamente."
+  },
+  "standard": {
+    "pattern": ".*",
+    "max_nulls": 15.0,
+    "max_frozen_rate": 10.0,
+    "max_spike_rate": 5.0,
+    "description": "A regra padrão para todos os sensores comuns de 1Hz que não encaixam nas regras acima (ex: HR, SpO2)."
+  }
+}

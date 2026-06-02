@@ -1,0 +1,59 @@
+# Segue o open data contract standard: https://bitol-io.github.io/open-data-contract-standard/latest/
+
+contract:
+  id: bronze.patients
+  version: 1.0.0
+  applies_to_product: bronze.patients
+  status: active
+
+product:
+  id: bronze.patients
+  layer: bronze
+  domain: healthcare_clinical
+  owner:
+    team: data-engineering
+    contact: data-engineering@hospital.org
+  description: "Raw, unmodified patient demographic and surgery data ingested from the clinical source systems. Preserves full fidelity for auditing, debugging, and reprocessing."
+  consumers:
+    - name: silver.patients_split_pipeline
+      type: pipeline
+      access: iceberg_read
+
+interface:
+  grain: "1 raw record per surgical case as received"
+  primary_key: [] # No primary key in Bronze! We expect and keep potential duplicates.
+
+schema:
+  - name: caseid
+    type: string
+    nullable: true
+    description: "Identifier for the surgical case or patient session."
+  - name: age
+    type: string
+    nullable: true
+    description: "Patient's age as received from the source."
+  - name: sex
+    type: string
+    nullable: true
+    description: "Patient's biological sex as received from the source."
+  - name: ingest_time
+    type: timestamp
+    nullable: false
+    description: "System timestamp when the event was ingested into the Bronze layer."
+  - name: source_system
+    type: string
+    nullable: false
+    description: "Identifier for the source system of the data, in this case, 'Clinical_EHR'."
+
+semantics:
+  definitions:
+    raw_patient_record: "An unmodified record received from the clinical system, including potential data entry errors, nulls, or duplicates."
+
+quality:
+  constraints:
+    - rule: "no_nulls(ingest_time, source_system)"
+      severity: error
+      description: "We cannot lose the raw data audit trail or the ingestion metadata."
+    - rule: "schema_allows_additional_columns"
+      severity: info
+      description: "The clinical payload contains additional columns (height, weight, bmi, asa, optype, dx, etc.). The Bronze schema only validates structural routing keys. Additional columns are preserved as-is for downstream processing in the Silver layer."

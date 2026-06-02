@@ -1,0 +1,100 @@
+contract:
+  id: gold.icu_ml_features
+  version: 1.0.0
+  applies_to_product: gold.icu_ml_features
+  status: active
+
+product:
+  id: gold.icu_ml_features
+  layer: gold
+  domain: healthcare_ml
+  owner:
+    team: data-engineering
+    contact: data-engineering@hospital.org
+  description: "Flat feature table (1 row per patient case) combining demographics, surgery context, pre-operative lab results and intraoperative vital sign aggregations. Used as input to ICU days prediction models."
+  consumers:
+    - name: icu_predictor_train_workflow
+      type: ml_training
+      access: iceberg_read
+
+interface:
+  grain: "1 feature record per patient surgical case."
+  primary_key: [caseid]
+
+schema:
+  - name: caseid
+    type: string
+    nullable: false
+    description: "Unique identifier for the patient's surgical case."
+  - name: age
+    type: float
+    nullable: true
+    description: "Patient age in years."
+  - name: sex
+    type: string
+    nullable: true
+    description: "Biological sex of the patient (M/F)."
+  - name: bmi
+    type: float
+    nullable: true
+    description: "Body Mass Index."
+  - name: asa
+    type: float
+    nullable: true
+    description: "ASA physical status classification (1-6). Key surgical risk predictor."
+  - name: department
+    type: string
+    nullable: true
+    description: "Hospital department where the surgery took place."
+  - name: optype
+    type: string
+    nullable: true
+    description: "Category of surgical operation."
+  - name: approach
+    type: string
+    nullable: true
+    description: "Surgical approach (Open, Videoscopic, etc.)."
+  - name: ane_type
+    type: string
+    nullable: true
+    description: "Anesthesia type administered."
+  - name: preop_hb
+    type: float
+    nullable: true
+    description: "Pre-operative hemoglobin (g/dL)."
+  - name: preop_plt
+    type: float
+    nullable: true
+    description: "Pre-operative platelet count (x1000/mcL)."
+  - name: preop_wbc
+    type: float
+    nullable: true
+    description: "Pre-operative white blood cell count (x1000/mcL)."
+  - name: preop_gluc
+    type: float
+    nullable: true
+    description: "Pre-operative glucose (mg/dL)."
+  - name: preop_cr
+    type: float
+    nullable: true
+    description: "Pre-operative creatinine (mg/dL). Renal function marker."
+  - name: preop_alb
+    type: float
+    nullable: true
+    description: "Pre-operative albumin (g/dL). Nutritional/hepatic status marker."
+  - name: icu_days
+    type: float
+    nullable: false
+    description: "Target variable: number of days the patient spent in ICU post-surgery."
+
+quality:
+  constraints:
+    - rule: "no_nulls(caseid, icu_days)"
+      severity: error
+      description: "Every feature record must have a case identifier and a known ICU duration (target)."
+    - rule: "icu_days >= 0"
+      severity: error
+      description: "ICU days cannot be negative."
+    - rule: "age >= 0 AND age <= 120"
+      severity: warning
+      description: "Patient age must be physiologically plausible."

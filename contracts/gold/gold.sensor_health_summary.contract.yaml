@@ -1,0 +1,78 @@
+contract:
+  id: gold.hardware_failures_summary
+  version: 1.0.0
+  applies_to_product: gold.hardware_failures_summary
+  status: active
+
+product:
+  id: gold.hardware_failures_summary
+  layer: gold
+  domain: healthcare_iot
+  owner:
+    team: data-engineering
+    contact: data-engineering@company.com
+  description: "Summary of hardware failures detected across all sensors, aggregated by case and time. This product identifies patterns of sensor malfunctions, including frequency and types of failures, to support proactive maintenance and improve patient safety."
+  consumers:
+    - name: clinical_quality_dashboard
+      type: dashboard
+      access: iceberg_read
+
+interface:
+  grain: "1 summary record per case per sensor"
+  primary_key: [case_id, sensor_name]
+
+schema:
+  - name: case_id
+    type: string
+    nullable: false
+    description: "Identifier for the surgical case or patient session."
+  - name: sensor_name
+    type: string
+    nullable: false
+    description: "Name of the sensor that experienced the failure."
+  - name: equipment_brand
+    type: string
+    nullable: false
+    description: "Brand of the equipment associated with the sensor, if available."
+  - name: null_rate_percentage
+    type: float
+    nullable: false
+    description: "Percentage of null readings detected for the sensor during the case."
+  - name: frozen_signal_count
+    type: integer
+    nullable: false
+    description: "Total count of frozen signal events detected for the sensor during the case."
+  - name: noise_spikes_count
+    type: integer
+    nullable: false
+    description: "Total count of noise spike events detected for the sensor during the case."
+  - name: hardware_failures
+    type: integer
+    nullable: true
+    description: "Total count of hardware failure events detected for the sensor during the case, including signal loss, out-of-range values, and known error patterns."
+  - name: health_grade
+    type: string
+    nullable: false
+    description: "Overall health status of the sensor for the case, categorized as 'Falha Crítica', 'Degradado', 'Aceitável' or 'Excelente' based on predefined thresholds for null rates and error counts."
+
+semantics:
+  definitions:
+    hardware_failure: "An event where a sensor's readings are deemed unreliable due to detected malfunctions, such as signal loss, out-of-range values, or known error patterns."
+    frozen_signal: "A condition where a sensor's output remains constant for an extended period, indicating a potential malfunction."
+    noise_spike: "A sudden, brief increase in signal readings that deviates significantly from normal patterns, suggesting potential interference or sensor issues."
+    health_grade: "A categorical assessment of the sensor's performance during the case, determined by analyzing null rates and error counts against established thresholds to classify the sensor as 'Falha Crítica', 'Degradado', 'Aceitável' or 'Excelente'."
+
+quality:
+  constraints:
+    - rule: "no_nulls(case_id, sensor_name, equipment_brand, null_rate_percentage, frozen_signal_count, noise_spikes_count, hardware_failures, health_grade)"
+      severity: error
+      description: "Critical fields must not be null in the hardware failures summary."
+    - rule: "null_rate_percentage >= 0 AND null_rate_percentage <= 100"
+      severity: error
+      description: "Null rate percentage must be between 0 and 100."
+    - rule: "frozen_signal_count >= 0"
+      severity: error
+      description: "Frozen signal count must be zero or positive."
+    - rule: "noise_spikes_count >= 0"
+      severity: error
+      description: "Noise spikes count must be zero or positive."

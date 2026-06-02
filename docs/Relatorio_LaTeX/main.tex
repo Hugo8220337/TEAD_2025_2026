@@ -1,0 +1,124 @@
+\documentclass[12pt,a4paper,titlepage]{article}
+\usepackage[utf8]{inputenc} % para poder colocar acentos e caracteres especiais
+\usepackage[portuguese]{babel}
+\usepackage{graphicx} % Permite inserir e manipular imagens
+\usepackage{fancyhdr} % 
+\usepackage{caption}
+\usepackage{comment}
+\usepackage{geometry} % Permite definir facilmente margens e o layout da página
+\usepackage{setspace} % Permite alterar o espaçamento entre linhas
+\usepackage{titlesec} % Permite personalizar os títulos de secções e subseções
+\usepackage[hidelinks]{hyperref} % Ativa links clicáveis no PDF
+\usepackage{multicol} % coloca isto no preâmbulo
+
+
+% Configuração do listings (paraexcertos de código)
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\renewcommand{\lstlistingname}{Excerto} % Colocar como excerto no pdf e não como Listing
+\lstdefinestyle{mystyle}{
+	backgroundcolor=\color{backcolour},   
+	commentstyle=\color{codegreen},
+	keywordstyle=\color{magenta},
+	numberstyle=\tiny\color{codegray},
+	stringstyle=\color{codepurple},
+	basicstyle=\ttfamily\footnotesize,
+	breakatwhitespace=false,         
+	breaklines=true,                 
+	captionpos=b,                    
+	keepspaces=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=2
+}
+\lstset{style=mystyle}
+% Ensinar o listings UTF-8
+\lstset{
+	extendedchars=true,
+	literate=
+	{á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+	{Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+	{à}{{\`a}}1 {è}{{\`e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
+	{À}{{\`A}}1 {È}{{\'E}}1 {Ì}{{\`I}}1 {Ò}{{\`O}}1 {Ù}{{\`U}}1
+	{â}{{\^a}}1 {ê}{{\^e}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {û}{{\^u}}1
+	{Â}{{\^A}}1 {Ê}{{\^E}}1 {Î}{{\^I}}1 {Ô}{{\^O}}1 {Û}{{\^U}}1
+	{ã}{{\~a}}1 {õ}{{\~o}}1 {Ã}{{\~A}}1 {Õ}{{\~O}}1
+	{ç}{{\c c}}1 {Ç}{{\c C}}1
+}
+
+% Page setup
+\geometry{margin=2.5cm}
+\setstretch{1.5}
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\thepage}
+\lhead{Escola Superior de Tecnologia e Gestão}
+
+% Title formatting
+\titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{1em}{}
+
+\begin{document}
+
+% Title Page
+\begin{titlepage}
+    \centering
+    \includegraphics[width=15cm]{imagens/estg_logo.png}\par\vspace{0.9cm} % 
+    \scshape % Small caps for the institution name
+    
+    \rule{\textwidth}{1pt}\vspace{0.4cm} % Horizontal line
+    {\Huge \bfseries Lakehouse para Análise Clínica \par}
+    {Tecnologias Escaláveis para Análise de Dados\par}
+    \vspace{0.4cm}\rule{\textwidth}{1pt}\par
+    \vspace{2cm}
+    
+    \Large Mestrado em Engenharia Informática \par
+    \vspace{4cm}
+
+    \normalsize
+    \textbf{Grupo 7} \par
+    Diogo Pereira – 8200594 \par
+    Duarte Sampaio – 8190553 \par
+    Hugo Guimarães – 8220337 \par
+    Nuno Silva – 8180393
+    \vfill
+
+    \large \today
+\end{titlepage}
+
+
+% Indice
+\tableofcontents
+\newpage
+
+% Lista de Tabelas
+%\renewcommand{\listtablename}{Índice de Tabelas}
+%\listoftables
+%\addcontentsline{toc}{section}{Índice de Tabelas}
+%\newpage
+
+
+
+\include{seccoes/introducao}
+
+\newpage
+
+\include{seccoes/definicao_problema}
+
+\include{seccoes/arquitetura_lakehouse}
+
+\input{seccoes/governanca_garantia_qualidade}
+
+\input{seccoes/visualizacao_dados}
+
+
+
+\end{document}

@@ -1,0 +1,57 @@
+contract:
+  id: silver.vitals_quarantine
+  version: 1.0.0
+  applies_to_product: silver.vitals
+  status: active
+
+product:
+  id: silver.vitals_quarantine
+  layer: silver
+  domain: healthcare_iot
+  owner:
+    team: data-engineering
+    contact: data-engineering@company.com
+  description: "Quarantined vital signs data that has been identified as potentially erroneous or business rules. This data is isolated for further review and potential reprocessing."
+  consumers:
+    - name: gold.hardware_failures_summary
+      type: dashboard
+      access: iceberg_read
+
+interface:
+  grain: "1 quarantined event per sensor reading"
+  primary_key: [case_id, time]
+
+schema:
+  - name: case_id
+    type: string
+    nullable: false
+    description: "Identifier for the surgical case or patient session."
+  - name: time
+    type: timestamp
+    nullable: false
+    description: "Event time when the potentially erroneous reading was recorded."
+  - name: sensor_name
+    type: string
+    nullable: false
+    description: "Name of the sensor that recorded the potentially erroneous reading."
+  - name: original_value
+    type: string
+    nullable: true
+    description: "The original sensor reading value that was identified as potentially erroneous."
+  - name: error_reason
+    type: string
+    nullable: false
+    description: "Reason why the reading was quarantined, such as 'out of range', 'duplicate', or 'timestamp in future'."
+
+semantics:
+  definitions:
+    quarantined_event: "A sensor reading that has been identified as potentially erroneous based on business"
+
+quality:
+  constraints:
+    - rule: "no_nulls(case_id, time, sensor_name, error_reason)"
+      severity: error
+      description: "Critical fields must not be null for quarantined events."
+    - rule: "time <= current_timestamp()"
+      severity: error
+      description: "Event time cannot be in the future for quarantined events." 

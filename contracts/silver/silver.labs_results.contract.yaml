@@ -1,0 +1,58 @@
+# Follows the open data contract standard: https://bitol-io.github.io/open-data-contract-standard/latest/
+
+contract:
+  id: silver.labs_results
+  version: 1.0.0
+  applies_to_product: silver.labs
+  status: active
+
+product:
+  id: silver.labs_results
+  layer: silver
+  domain: healthcare_labs
+  owner:
+    team: data-engineering
+    contact: data-engineering@hospital.org
+  description: "Cleaned and standardized laboratory results. Categorized by surgery phase and flagged for recency."
+  consumers:
+    - name: gold.pre_vs_pos_operation_summary
+      type: analytics
+      access: iceberg_read
+
+interface:
+  grain: "1 cleaned event per lab measurement"
+  primary_key: [caseid, name, dt]
+
+schema:
+  - name: caseid
+    type: string
+    nullable: false
+  - name: name
+    type: string
+    nullable: false
+    description: "Standardized code for the lab test (hb, plt, etc.)"
+  - name: result
+    type: float
+    nullable: false
+  - name: surgery_phase
+    type: string
+    nullable: false
+    description: "Phase classification: PRE_OP or POS_OP"
+  - name: is_most_recent
+    type: boolean
+    nullable: false
+    description: "Flag indicating the latest measurement for the given phase."
+
+semantics:
+  definitions:
+    cleaned_event: "A lab reading processed to remove errors and classified for clinical analysis."
+
+quality: 
+  constraints:
+    - rule: "no_nulls(caseid, name, result, surgery_phase)"
+      severity: error
+    - rule: "result >= 0"
+      severity: error
+  slo:
+    freshness: "P95 <= 15m after Bronze ingestion"
+    completeness: ">= 99% of valid records from Bronze"

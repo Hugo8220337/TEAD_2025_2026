@@ -1,0 +1,59 @@
+# Follows the open data contract standard: https://bitol-io.github.io/open-data-contract-standard/latest/
+
+contract:
+  id: silver.labs_quarantine
+  version: 1.0.0
+  applies_to_product: silver.labs
+  status: active
+
+product:
+  id: silver.labs_quarantine
+  layer: silver
+  domain: healthcare_labs
+  owner:
+    team: data-engineering
+    contact: data-engineering@hospital.org
+  description: "Laboratory results that failed biological or technical validation rules (e.g., negative values, missing identifiers). Isolated for data quality monitoring and debugging."
+  consumers:
+    - name: data_quality_dashboard
+      type: dashboard
+      access: iceberg_read
+
+interface:
+  grain: "1 quarantined event per failed lab measurement"
+  primary_key: [] # Sem chave primária, pois dados errados podem ter chaves nulas ou duplicadas
+
+schema:
+  - name: caseid
+    type: string
+    nullable: true
+    description: "Identifier for the surgical case (may be null if that caused the quarantine)."
+  - name: name
+    type: string
+    nullable: true
+    description: "Standardized code for the lab test (hb, plt, etc.)"
+  - name: result
+    type: float
+    nullable: true
+    description: "Numeric result of the laboratory test (may be null or negative)."
+  - name: dt
+    type: float
+    nullable: true
+    description: "Timestamp of the measurement (may be null)."
+  - name: error_reason
+    type: string
+    nullable: false
+    description: "Reason why the record was quarantined (e.g., 'Valor laboratorial nulo ou negativo')."
+
+semantics:
+  definitions:
+    quarantined_event: "A lab reading that did not pass the mandatory data quality checks in the Silver pipeline."
+
+quality: 
+  constraints:
+    - rule: "no_nulls(error_reason)"
+      severity: error
+      description: "Every quarantined record must have an assigned error reason."
+  slo:
+    freshness: "P95 <= 15m after Bronze ingestion"
+    completeness: "100% of invalid records from Bronze must be captured here."

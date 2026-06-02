@@ -1,0 +1,39 @@
+\section{Governança e Garantia de Qualidade} \label{sec:governanca_garantia_qualidade}
+
+\subsection{Padrão de Data Contracts} \label{subsec:padrao_data_products}
+Para garantir a fiabilidade da plataforma, adotou-se uma abordagem baseada em \textit{Data Contracts}, seguindo as especificações do \textit{Open Data Contract Standard} (ODCS). Em vez de embutir validações no código, a estrutura, semântica e regras de negócio de cada tabela foram colocadas em ficheiros yaml. Estes contratos definem a tipagem esperada e restrições críticas (por exemplo, \texttt{age BETWEEN 0 AND 120} na tabela de demografia ou \texttt{no\_nulls(case\_id, time)} nos sinais vitais), atuando simultaneamente como documentação e especificação técnica para os consumidores de cada \textit{Data Product}.
+
+\subsection{Implementação do Quality Gate} \label{subsec:implementacao_quality_gate}
+Para forçar o cumprimento dos contratos, desenvolveu-se um componente de \textit{Quality Gate} integrado diretamente no Flyte. Este avaliador em Python intercepta os \textit{DataFrames} antes da persistência dos mesmos no Lakehouse. Lendo o ficheiro YAML correspondente, traduz as regras em \textit{strings} para testes (via Pandas/PyArrow). O componente funciona sob o padrão arquitetural de \textit{Circuit Breaker}: caso os dados apresentem qualquer violação de integridade face ao contrato, a \textit{task} falha de imediato e a transação de escrita na tabela Apache Iceberg é abortada, garantindo que as camadas Silver e Gold permanecem limpas.
+
+\subsection{Garantia de Idempotência e Operações de \textit{Upsert}} \label{subsec:garantia_idempotencia}
+Para evitar duplicações e garantir consistência em reexecuções, implementou-se um mecanismo de idempotência focado em \textit{Upserts} no \textit{workflow} bronze dos pacientes. O algoritmo cruza o novo lote com a tabela Apache Iceberg via chaves primárias (ex: \texttt{caseid}, \texttt{subjectid}). Metadados técnicos (como \texttt{ingest\_time}) são ignorados na comparação para impedir atualizações causadas apenas por novos carimbos temporais. Após isolar inserções inéditas (\textit{Insert}) e detetar reais variações clínicas (\textit{Update}), o \textit{DataFrame} final é gravado numa transação ACID única (via \textit{overwrite}). Isto assegura que o \textit{Lakehouse} mantém um estado determinístico, preservando a auditoria das alterações nos \textit{logs} do orquestrador.
+
+\subsection{Estratégia de Quarentena} \label{subsec:estrategia_quarentena}
+A gestão de dados anómalos ou ruidosos (tais como falhas de hardware, valores impossíveis ou identificadores inválidos) foi implementada com base no padrão \textit{Dead Letter Queue} (DLQ). Na camada Silver, a validação e separação dos dados são realizadas em simultâneo: os registos válidos progridem para as tabelas limpas (ex: \texttt{vitals\_clean}), enquanto os registos que falham as regras de negócio são isolados em tabelas dedicadas (ex: \texttt{vitals\_quarantine}). Estas tabelas de quarentena retêm os dados originais acompanhados de uma nova coluna \texttt{error\_reason}, permitindo a auditoria contínua, o realimentar de \textit{dashboards} de manutenção técnica e a eventual re-ingestão, sem comprometer a disponibilidade dos dados saudáveis.
+
+\subsection{Otimização Analítica e Processamento Escalonável} \label{subsec:otimizacao_queries}
+Embora não tenha sido o principal foco do projeto, foram aplicados princípios de processamento escalonável (\textit{Scalable Processing}) e otimização na camada de \textit{Serving} (Trino/Grafana). O objetivo foi assegurar que o sistema cumpre os \textit{Service Level Objectives} (SLOs) de performance, minimizando o custo por execução (\textit{cost per run}) perante volumes crescentes de dados.
+
+Um exemplo prático desta aplicação encontra-se na consulta SQL desenvolvida para alimentar o gráfico de "Distribuição de Tipos de Falha por Marca de Equipamento" no \textit{dashboard} de manutenção:
+
+\begin{lstlisting}[language=SQL, caption={Query SQL para Distribuição de Tipos de Falha por Marca de Equipamento}, label={lst:SQL_bom}]
+	WITH erros_agrupados AS (
+		SELECT equipment_brand, error_reason, CAST(SUM(failure_count) AS DOUBLE) AS total_falhas 
+		FROM iceberg.gold.hardware_failures_summary 
+		WHERE equipment_brand IN (${marca:singlequote})
+		GROUP BY equipment_brand, error_reason
+	)
+	SELECT 
+		equipment_brand, error_reason, total_falhas,
+		ROUND((total_falhas / SUM(total_falhas) OVER (PARTITION BY equipment_brand)) * 100, 2) AS pct_erro
+	FROM erros_agrupados
+	ORDER BY equipment_brand, pct_erro DESC
+\end{lstlisting}
+
+Esta consulta é otimizada através dos seguintes mecanismos:
+\begin{itemize}
+	\item \textbf{\textit{Predicate Pushdown} Prévio:} O filtro \texttt{WHERE equipment\_brand IN (...)} é aplicado logo na \textit{Common Table Expression} (CTE) inicial, reduzindo drasticamente o volume de dados a ler da tabela Iceberg antes de qualquer agregação pesada (\textit{Filter Pushdown}).
+	
+	\item \textbf{Gestão Eficiente de \textit{Shuffle}:} Em vez de calcular a percentagem total de falhas, forçando um cruzamento de dados (\textit{Join}) com uma tabela agregada externa, a consulta utiliza uma \textit{Window Function} (\texttt{SUM(...) OVER(PARTITION BY...)}). O uso de agregações em janela não precisa de grandes operações para movimentar os dados (\textit{shuffle-heavy}), limitando o processamento à partição específica em memória.
+\end{itemize}

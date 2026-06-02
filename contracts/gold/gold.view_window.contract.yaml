@@ -1,0 +1,38 @@
+contract:
+  id: gold.view_window
+  name: View Window Aggregates
+  source: workflows/gold/workflow_sensor_view_gold.py
+  description: >
+    Contract for the Gold table containing windowed sensor aggregates
+    per surgery/case, sensor and time window.
+
+schema:
+  fields:
+    - name: surgery_id
+      type: string
+      description: Identificador da cirurgia/caso.
+    - name: sensor_id
+      type: string
+      description: Identificador do sensor.
+    - name: window_start
+      type: timestamp
+      description: Início da janela temporal.
+    - name: avg_value
+      type: number
+      description: Média dos valores na janela.
+    - name: stddev_value
+      type: number
+      description: Desvio-padrão dos valores na janela.
+    - name: n_samples
+      type: integer
+      description: Número de amostras na janela.
+    - name: n_critical
+      type: integer
+      description: Número de amostras críticas na janela.
+    - name: pct_critical
+      type: number
+      description: Percentagem de amostras críticas na janela.
+
+quality:
+  constraints:
+    - rule: "no_nulls(surgery_id, sensor_id, window_start, avg_value, n_samples)"

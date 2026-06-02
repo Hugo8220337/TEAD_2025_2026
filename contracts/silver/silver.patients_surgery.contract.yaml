@@ -1,0 +1,74 @@
+# Follows the open data contract standard: https://bitol-io.github.io/open-data-contract-standard/latest/
+
+contract:
+  id: silver.patients_surgery
+  version: 1.0.0
+  applies_to_product: silver.patients
+  status: active
+
+product:
+  id: silver.patients_surgery
+  layer: silver
+  domain: healthcare_clinical
+  owner:
+    team: data-engineering
+    contact: data-engineering@hospital.org
+  description: "Cleaned surgical context data for each patient case. Separated from demographics to follow domain-driven design. Contains details about the procedure, department, and ICU stay."
+  consumers:
+    - name: gold.pre_vs_pos_operation_summary
+      type: analytics
+      access: iceberg_read
+
+interface:
+  grain: "1 unique surgery record per patient case"
+  primary_key: [caseid]
+
+schema:
+  - name: caseid
+    type: string
+    nullable: false
+    description: "Unique identifier for the patient's surgical case."
+  - name: department
+    type: string
+    nullable: true
+    description: "Hospital department where the surgery took place."
+  - name: optype
+    type: string
+    nullable: true
+    description: "Type or category of the operation."
+  - name: dx
+    type: string
+    nullable: true
+    description: "Clinical diagnosis description."
+  - name: opname
+    type: string
+    nullable: true
+    description: "Specific name of the surgical procedure performed."
+  - name: approach
+    type: string
+    nullable: true
+    description: "Surgical approach used (e.g., Open, Videoscopic)."
+  - name: ane_type
+    type: string
+    nullable: true
+    description: "Type of anesthesia administered (e.g., General)."
+  - name: icu_days
+    type: float
+    nullable: true
+    description: "Number of days the patient spent in the Intensive Care Unit (ICU)."
+
+semantics:
+  definitions:
+    surgery_context: "A deduplicated record representing the operational details of a surgery. Only exists for patients who also passed demographic biological validation."
+
+quality: 
+  constraints:
+    - rule: "no_nulls(caseid)"
+      severity: error
+      description: "caseid is strictly mandatory for joining with labs and demographics downstream."
+    - rule: "is_unique(caseid)"
+      severity: error
+      description: "Guaranteed by the deduplication step (keep='last') in the orchestrator."
+  slo:
+    freshness: "P95 <= 15m after Bronze ingestion"
+    completeness: ">= 99% of valid records from Bronze"

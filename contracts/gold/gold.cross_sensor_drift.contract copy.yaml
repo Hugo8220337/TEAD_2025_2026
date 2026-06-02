@@ -1,0 +1,61 @@
+contract:
+  id: gold.hardware_failures_summary
+  version: 1.0.0
+  applies_to_product: gold.hardware_failures_summary
+  status: active
+
+product:
+  id: gold.hardware_failures_summary
+  layer: gold
+  domain: healthcare_iot
+  owner:
+    team: data-engineering
+    contact: data-engineering@company.com
+  description: "Summary of hardware failures detected across all sensors, aggregated by case and time. This product identifies patterns of sensor malfunctions, including frequency and types of failures, to support proactive maintenance and improve patient safety."
+  consumers:
+    - name: clinical_quality_dashboard
+      type: dashboard
+      access: iceberg_read
+
+interface:
+  grain: "1 summary record per per case per sensor per time"
+  primary_key: [case_id, time, parameter_measured]
+
+schema:
+ - name: case_id
+   type: string
+   nullable: false
+   description: "Identifier for the surgical case or patient session."
+ - name: time
+   type: timestamp
+   nullable: false
+   description: "Timestamp of the hardware failure event."
+ - name: parameter_measured
+   type: string
+   nullable: false
+   description: "Name of the sensor parameter that experienced the failure."
+ - name: sensor_id_1
+   type: string
+   nullable: false
+   description: "Identifier for the first sensor involved in the failure event."
+ - name: sensor_id_2
+   type: string
+   nullable: true
+   description: "Identifier for the second sensor involved in the failure event, if applicable."
+ - name: drift_value
+   type: float
+   nullable: false
+   description: "Calculated drift value indicating the degree of sensor deviation from expected readings."
+
+semantics:
+  definitions:
+    sensor_drift: "A gradual deviation in sensor readings over time, which may indicate a hardware malfunction or calibration issue. Drift is typically measured by comparing the sensor's output to a known reference or expected value, and significant drift can lead to inaccurate data and potential safety risks."
+
+quality:
+  constraints:
+    - rule: "no_nulls(case_id, time, parameter_measured, sensor_id_1, drift_value)"
+      severity: error
+      description: "Critical fields must not be null in the hardware failures summary."
+    - rule: "drift_value >= 0"
+      severity: error
+      description: "Drift value must be zero or positive, indicating the degree of deviation from expected readings."

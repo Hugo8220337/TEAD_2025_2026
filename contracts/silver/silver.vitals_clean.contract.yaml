@@ -1,0 +1,70 @@
+# Segue o open data contract standard: https://bitol-io.github.io/open-data-contract-standard/latest/
+
+contract:
+  id: silver.vitals_clean
+  version: 1.0.0
+  applies_to_product: silver.vitals
+  status: active
+
+product:
+  id: silver.vitals_clean
+  layer: silver
+  domain: healthcare_iot
+  owner:
+    team: data-engineering
+    contact: data-engineering@company.com
+  description: "Cleaned and standardized vital signs data derived from bronze.vitals. This product applies business rules to filter out erroneous readings, standardizes timestamps, and enriches the data with case metadata for easier analysis."
+  consumers:
+    - name: gold.sensor_health_summary
+      type: analytics
+      access: iceberg_read
+    - name: gold.cross_sensor_drift
+      type: dashboard
+      access: iceberg_read
+    - name: gold.hardware_failures_summary
+      type: dashboard
+      access: iceberg_read
+
+interface:
+  grain: "1 cleaned event per sensor reading"
+  primary_key: [case_id, time]
+
+schema:
+  - name: case_id
+    type: string
+    nullable: false
+    description: "Identifier for the surgical case or patient session."
+  - name: time
+    type: timestamp
+    nullable: false
+    description: "Standardized event time, adjusted for any known clock skew and converted to UTC"
+  - name: ingest_time
+    type: timestamp
+    nullable: false
+    description: "System timestamp when the event was ingested into the Bronze layer."
+
+semantics:
+  definitions:
+    cleaned_event: "A sensor reading that has been processed to remove duplicates, filter out erroneous"
+
+quality: 
+  constraints:
+    - rule: "no_nulls(case_id, time, ingest_time)"
+      severity: error
+      description: "Critical fields must not be null after cleaning."
+    - rule: "time <= current_timestamp()"
+      severity: error
+      description: "Event time cannot be in the future."
+    - rule: "case_id IN (SELECT DISTINCT case_id FROM bronze.vitals)"
+      severity: warning
+      description: "Case ID should exist in the raw data, but we allow new cases to appear over time."
+  slo:
+    freshness: "P95 <= 10m after event generation"
+    completeness: ">= 99% of valid events from Bronze should be present in Silver"
+    accuracy: ">= 98% of events should pass validation rules"
+
+change_management:
+  compatibility_rules:
+    - change: "normalize_sensor_names"
+      version_bump: minor
+      compatibility: backward
