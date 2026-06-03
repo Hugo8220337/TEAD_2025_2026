@@ -17,7 +17,7 @@ O \textit{Dashboard} clínico pré e pós operatório permite medir o impacto e 
 Além disso, a plataforma separa os resultados por género, usando gráficos de barras para mostrar as diferenças entre homens e mulheres. Este detalhe revela problemas que ficam escondidos quando olhamos apenas para a média geral. Por exemplo, mostra que a queda do valor de AMMO é muito mais grave nos homens.
 
 Com a ajuda de filtros por especialidade médica e por indicador clínico, o painel transforma dados difíceis em informação clara e útil. Isto ajuda os médicos a planear melhor a recuperação de cada paciente.
-\begin{figure}
+\begin{figure}[h]
 	\centering
 	\includegraphics[width=0.7\linewidth]{imagens/pre_pos_operacao_duarte_1}
 	\includegraphics[width=0.7\linewidth]{imagens/pre_pos_operacao_duarte_2}
@@ -28,11 +28,9 @@ Com a ajuda de filtros por especialidade médica e por indicador clínico, o pai
 \subsection{Volatilidade dos Sinais Vitais} \label{subsec:volatilidade_sinais_vitais}
 O dashboard desenvolvido tem como objetivo apoiar a interpretação dos sinais vitais recolhidos durante o procedimento cirúrgico, permitindo comparar o sinal bruto com o sinal suavizado e observar o efeito do processamento aplicado. A interface foi organizada em torno de filtros de cirurgia e sensor, o que possibilita ao utilizador selecionar rapidamente o contexto clínico pretendido e analisar a respetiva evolução temporal. Para melhorar a leitura dos resultados, o dashboard inclui ainda informação descritiva sobre cada sensor, como o parâmetro medido, a unidade de medida e a marca do equipamento, tornando a análise mais intuitiva e menos dependente de identificadores técnicos.
 
-A página principal do relatório apresenta, lado a lado, o sinal antes e depois da suavização, facilitando a comparação entre a variabilidade original e a tendência subjacente após tratamento dos dados. Esta abordagem permite evidenciar a utilidade da suavização na redução de ruído e na interpretação clínica dos sinais. Além disso, a estrutura do dashboard foi pensada para serOK que a Microsoft não santinha nenhuma… mas tirem as palas dos olhos!
+A página principal do relatório apresenta, lado a lado, o sinal antes e depois da suavização, facilitando a comparação entre a variabilidade original e a tendência subjacente após tratamento dos dados. Esta abordagem permite evidenciar a utilidade da suavização na redução de ruído e na interpretação clínica dos sinais. Além disso, a estrutura do dashboard foi pensada para ser interativo e orientada ao utilizador final, permitindo explorar os dados por cirurgia e por sensor sem necessidade de recorrer a consultas à base de dados. Desta forma, o dashboard transforma dados operacionais em informação visual mais clara, apoiando a análise exploratória e a comunicação dos resultados.
 
- interativa e orientada ao utilizador final, permitindo explorar os dados por cirurgia e por sensor sem necessidade de recorrer a consultas à base de dados. Desta forma, o dashboard transforma dados operacionais em informação visual mais clara, apoiando a análise exploratória e a comunicação dos resultados.
-
-\begin{figure}
+\begin{figure}[h]
 	\centering
 	\includegraphics[width=0.7\linewidth]{imagens/volatilidade_nuno}
 	\caption{Dashboard PowerBI de Volatilidade dos Sinais Vitais}
